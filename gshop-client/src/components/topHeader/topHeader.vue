@@ -11,9 +11,7 @@
 <script>
   export default {
     name: 'header',
-    props:{
-      msg:String
-    }
+    props:["msg"]
   }
 </script>
 
