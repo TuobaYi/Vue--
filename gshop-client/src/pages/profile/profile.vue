@@ -7,12 +7,12 @@
           <i class="iconfont icon-person"></i>
         </div>
         <div class="user-info">
-          <p class="user-info-top">登录/注册</p>
+          <p class="user-info-top" v-show="user.name">{{user.name ? user.name : '登录/注册'}}</p>
           <p>
                 <span class="user-icon">
                   <i class="iconfont icon-shouji icon-mobile"></i>
                 </span>
-            <span class="icon-mobile-number">暂无绑定手机号</span>
+            <span class="icon-mobile-number" v-show="user.phone">{{user.phone?user.phone:'暂无绑定手机号'}}</span>
           </p>
         </div>
         <span class="arrow">
@@ -87,21 +87,33 @@
               </span>
         </div>
       </a>
+      <mt-button type="danger" style="width: 100%;" @click="handleLogout">退出 登录</mt-button>
     </section>
   </section>
 </template>
 
 <script>
   import topHander from '../../components/topHeader/topHeader';
+  import {mapState} from 'vuex';
+  import {reqlogout} from '../../api';
   export default {
     name: 'profile',
     components:{
-      topHander
+      topHander,
     },
     methods:{
       handleSkip(){
         this.$router.push('login');
+      },
+     async handleLogout(){
+        let result =await reqLonOut();
+        if (result.code === 0) {
+          this.$store.state.user={}//重置user对象
+        }
       }
+    },
+    computed:{
+      ...mapState(['user'])
     }
   }
 </script>

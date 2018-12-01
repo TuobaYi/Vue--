@@ -6,6 +6,7 @@
 </template>
 
 <script>
+  import './mock/mockjs';
   import footerGitde from './components/footerGitde/footerGitde';
   export default {
     name: 'App',
@@ -16,9 +17,5 @@
 </script>
 
 <style scoped lang="stylus" rel="stylesheet/stylus">
-  #app
-    width 100%
-    height 100%
-    background #f5f5f5
-    position relative
+
 </style>

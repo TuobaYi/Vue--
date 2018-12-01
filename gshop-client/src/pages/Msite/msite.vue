@@ -59,7 +59,7 @@ import Swiper from 'swiper';
 
           })
         })
-      }
+      },//监听数据,实现轮播
     },
     computed:{
       ...mapState(['address','categorys']),
@@ -75,7 +75,7 @@ import Swiper from 'swiper';
           }
         })
         return bigArr
-      },
+      },//二维数组轮播
 
     },
     components:{

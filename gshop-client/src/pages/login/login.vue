@@ -19,7 +19,7 @@
               >{{computeTime?`已发送${computeTime}`:"获取验证码"}}</button>
             </section>
             <section class="login_verification">
-              <input type="tel" maxlength="8" placeholder="验证码">
+              <input type="tel" maxlength="8" placeholder="验证码" v-model="code">
             </section>
             <section class="login_hint">
               温馨提示：未注册硅谷外卖帐号的手机号，登录时将自动注册，且代表已同意
@@ -29,22 +29,22 @@
           <div :class="{on:!isPhone}">
             <section>
               <section class="login_message">
-                <input type="tel" maxlength="11" placeholder="手机/邮箱/用户名">
+                <input type="tel" maxlength="11" placeholder="手机/邮箱/用户名" v-model="name">
               </section>
               <section class="login_verification">
-                <input type="tel" maxlength="8" placeholder="密码">
-                <div class="switch_button off">
-                  <div class="switch_circle"></div>
-                  <span class="switch_text">...</span>
+                <input :type="showPwd ? 'text' : 'password'" maxlength="8" placeholder="密码" v-model="pwd">
+                <div class="switch_button off" :class="{is_switch: showPwd}">
+                  <div class="switch_circle" :class="{is_switch: showPwd}" @click="showPwd = !showPwd"></div>
+                  <span class="switch_text" >{{showPwd ? 'pwd' : ''}}</span>
                 </div>
               </section>
               <section class="login_message">
-                <input type="text" maxlength="11" placeholder="验证码">
-                <img class="get_verification" src="./images/captcha.svg" alt="captcha">
+                <input type="text" maxlength="11" placeholder="验证码" v-model="captcha">
+                <img class="get_verification" :src="imageUrl" alt="captcha" @click="handleImage">
               </section>
             </section>
           </div>
-          <button class="login_submit">登录</button>
+          <button class="login_submit" @click.prevent="handleLogin">登录</button>
         </form>
         <a href="javascript:;" class="about_us">关于我们</a>
       </div>
@@ -56,14 +56,21 @@
 </template>
 
 <script>
+  import {reqSmsCode,reqSmsLogin,reqPwdLogin} from '../../api';
+  import { Toast,MessageBox } from 'mint-ui';
   export default {
     name: 'login',
     data() {
       return {
-        isPhone:true,
-        phone:'',
+        isPhone:true, //是否电话登录
         computeTime:0,//定义一个倒计时
-
+        showPwd:false,//密码显示,false不显示
+        imageUrl:'http://localhost:5000/captcha',//请求验证码图片的地址(特定格式)
+        phone:'13716962779',//存 电话号码
+        code:'',//收集手机验证码
+        name:'',//用户名
+        pwd:'',//登录密码
+        captcha:'',//图片验证码
       }
     },
     computed:{
@@ -74,14 +81,50 @@
     methods:{
       handleSkip(){
         this.$router.back();
-      },
-      handleVerification(){
+      },//页面的跳转
+      async handleVerification(){
         this.computeTime=5;
        let timeId = setInterval(()=>{
           this.computeTime--;
           if (!this.computeTime)clearInterval(timeId)
         },1000)
-      }
+        if (this.isRightPhone){
+         const result = await reqSmsCode(this.phone);
+          if (result.code != 0) {
+            Toast('获取验证码失败!!');
+          }
+        }
+      },//手机 获取验证码 的处理
+      handleImage(){
+        this.imageUrl='http://localhost:5000/captcha?reqTime='+Date.now()
+      },//验证码请求路径处理(图片验证)
+     async handleLogin(){
+        console.log('登录--空')
+        const {isPhone,isRightPhone,code,phone,name,pwd,captcha}=this;
+          if (isPhone) {//手机验证码登录 处理逻辑
+            if (isRightPhone && code.length===6) {
+              let result = await reqSmsLogin({code,phone});//发请求
+              console.log(result);
+              if (result.code === 0) {
+                this.$router.replace('login');
+              }else {
+                MessageBox('手机---验证码登录失败!!!');
+              }
+            }
+          }else{//账号 密码 登录 的逻辑
+             if (name  && pwd){
+               if (captcha.length===4){
+                 let result = await reqPwdLogin({name,pwd,captcha})
+                 if (result.code === 0) {
+                    this.$store.dispatch('uptataUser',result.data);
+                    this.$router.replace('login');
+                 }else {
+                   MessageBox('密码登录失败!!!');
+                 }
+               }
+             }
+          }
+      },//处理各种登录的问题
     },
   }
 </script>
@@ -170,9 +213,13 @@
                 transform translateY(-50%)
                 &.off
                   background #fff
+                &.is_switch
+                  background-color: #02a774
+                  .is_switch
+                    transform translateX(150%)
                   .switch_text
                     float right
-                    color #ddd
+                    color #58787b
                 &.on
                   background #02a774
                 >.switch_circle
