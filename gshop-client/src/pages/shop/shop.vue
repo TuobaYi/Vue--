@@ -12,6 +12,7 @@
         <router-link to="/shop/info">商家</router-link>
       </div>
     </div>
+
     <router-view/>
   </div>
 </template>
@@ -20,7 +21,7 @@
   import ShopHeader from '../../components/shopHander/ShopHeader';
   export default {
     mounted(){
-      this.$store.dispatch('getShopGoods')
+
     },
     components: {
       ShopHeader

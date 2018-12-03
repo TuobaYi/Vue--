@@ -2,85 +2,41 @@
   <div>
     <div class="goods">
       <div class="menu-wrapper">
-        <ul>
-          <li class="menu-item current">
-            <img class="icon" src="https://fuss10.elemecdn.com/0/6a/05b267f338acfeb8bd682d16e836dpng.png">
-            <span class="text bottom-border-1px">折扣</span>
-          </li>
-          <li class="menu-item">
-          <span class="text bottom-border-1px">
-            <img class="icon" src="https://fuss10.elemecdn.com/b/91/8cf4f67e0e8223931cd595dc932fepng.png">
-            优惠
-          </span>
+        <ul ref="leftUl">
+          <!--left导航 现在选中的特定样式 .current-->
+          <li class="menu-item " v-for="(good, index) in goods" :key="index"
+              :class="{current:currentIndex===index}"
+              @click="handleChoose(index)">
+            <span class="text bottom-border-1px">
+              <img class="icon" v-show="good.icon" :src="good.icon">
+              {{good.name}}</span>
           </li>
         </ul>
       </div>
       <div class="foods-wrapper">
-        <ul>
-          <li class="food-list-hook">
-            <h1 class="title">折扣</h1>
+        <ul ref="foodsUl">
+          <li class="food-list-hook" v-for="(good, index) in goods" :key="index">
+            <h1 class="title">{{good.name}}</h1>
             <ul>
-              <li class="food-item bottom-border-1px">
+              <li class="food-item bottom-border-1px"
+                  v-for="(food,index) in good.foods"
+                  :key="index"
+                  @click="showFood(food)">
                 <div class="icon">
                   <img width="57" height="57"
-                       src="http://fuss10.elemecdn.com/8/a6/453f65f16b1391942af11511b7a90jpeg.jpeg?imageView2/1/w/114/h/114">
+                       :src="food.icon">
                 </div>
                 <div class="content">
-                  <h2 class="name">南瓜粥</h2>
-                  <p class="desc">甜粥</p>
+                  <h2 class="name">{{food.name}}</h2>
+                  <p class="desc">{{food.description}}</p>
                   <div class="extra">
-                    <span class="count">月售91份</span>
-                    <span>好评率100%</span></div>
+                    <span class="count">月售{{food.sellCount}}份</span>
+                    <span>好评率{{food.rating}}%</span></div>
                   <div class="price">
-                    <span class="now">￥9</span>
+                    <span class="now">￥{{food.price}}</span>
                   </div>
                   <div class="cartcontrol-wrapper">
-                    CartControl组件
-                  </div>
-                </div>
-              </li>
-              <li class="food-item bottom-border-1px">
-                <div class="icon">
-                  <img width="57" height="57"
-                       src="http://fuss10.elemecdn.com/d/22/260bd78ee6ac6051136c5447fe307jpeg.jpeg?imageView2/1/w/114/h/114">
-                </div>
-                <div class="content">
-                  <h2 class="name">红豆薏米美肤粥</h2>
-                  <p class="desc">甜粥</p>
-                  <div class="extra">
-                    <span class="count">月售86份</span>
-                    <span>好评率100%</span>
-                  </div>
-                  <div class="price">
-                    <span class="now">￥12</span>
-                  </div>
-                  <div class="cartcontrol-wrapper">
-                    CartControl组件
-                  </div>
-                </div>
-              </li>
-            </ul>
-          </li>
-          <li class="food-list food-list-hook">
-            <h1 class="title">香浓甜粥</h1>
-            <ul>
-              <li class="food-item bottom-border-1px">
-                <div class="icon">
-                  <img width="57" height="57" src="http://fuss10.elemecdn.com/6/72/cb844f0bb60c502c6d5c05e0bddf5jpeg.jpeg?imageView2/1/w/114/h/114">
-                </div>
-                <div class="content">
-                  <h2 class="name">红枣山药粥</h2>
-                  <p class="desc">红枣山药糙米粥,素材包</p>
-                  <div class="extra">
-                    <span class="count">月售17份</span>
-                    <span>好评率100%</span>
-                  </div>
-                  <div class="price">
-                    <span class="now">￥29</span>
-                    <span class="old">￥36</span>
-                  </div>
-                  <div class="cartcontrol-wrapper">
-                    CartControl组件
+                    <cart-control :food="food"></cart-control>
                   </div>
                 </div>
               </li>
@@ -88,13 +44,105 @@
           </li>
         </ul>
       </div>
+      <shop-cart></shop-cart>
     </div>
+    <food :food="food" ref="food"></food>
   </div>
 </template>
 
 <script>
+  import {mapState} from 'vuex';
+  import BScroll from 'better-scroll';
+  import cartControl from '../../../../components/cartControl/cartControl';
+  import shopCart from '../../../../components/shopCart/shopCart';
+  import food from '../../../../components/food/food';
   export default {
-    name: 'goods'
+    name: 'goods',
+    data(){
+      return {
+        food: {}, // 需要显示的food
+        scrollY: 0, // 右侧列表滑动的Y轴坐标
+        tops: [], // 右侧列表中所有分类li的top值
+      }
+    },
+    computed:{
+      ...mapState(['goods']),
+      currentIndex(){
+        const {scrollY, tops} = this;
+        // 得到当前分类的下标
+        const index = tops.findIndex((top, index) => {
+          return scrollY>=top && scrollY<tops[index+1]
+        })
+        // 如果发生了变化, 让左侧列表滚动到index对应的li处
+        if(index!==this.index && this.leftScroll) { //保存一个index,在this中
+          this.index = index
+          this.leftScroll.scrollToElement(this.$refs.leftUl.children[index], 300)
+        }
+        return index
+      }
+    },
+    mounted(){
+      this.$store.dispatch('getShopGoods',()=>{
+        this.$nextTick(()=>{
+          this._initScroll()//两个滑动
+          this._initTops();//为tops赋值
+        })
+      })
+
+    },
+
+    methods:{
+      handleChoose(index){
+        const y = this.tops[index]
+        // 立即更新scrollY为目标坐标
+        this.scrollY = y
+        // 让右侧滑动到对应的位置
+        this.rightScroll.scrollTo(0, -y, 300)
+      },
+      // 组件标签对象就是组件对象
+      showFood(food) {
+        // 1. 更新food状态数据
+        this.food = food
+        // 2. 显示food组件界面
+        this.$refs.food.toggleShow()
+      },
+      _initScroll(){
+        this.leftScroll = new BScroll('.menu-wrapper',{//left 滑动
+          click:true
+        })
+        this.rightScroll =new BScroll('.foods-wrapper',{
+          click:true,
+          probeType: 1,  // 触摸, 非实时
+          // probeType: 2,  // 触摸, 实时
+          // probeType: 3,  // 触摸/惯性/编码, 实时
+        })
+        // 绑定滚动的事件监听
+        this.rightScroll.on('scroll', ({x, y}) => {
+          this.scrollY = Math.abs(y)//存储右侧滚动 y
+        })
+        // 绑定滚动结束的事件监听
+        this.rightScroll.on('scrollEnd', ({x, y}) => {
+          // 更新scrollY
+          this.scrollY = Math.abs(y)
+        })
+      },
+      _initTops(){
+        const tops=[];
+        let top = 0;
+        tops.push(top);
+        const lis = this.$refs.foodsUl.getElementsByClassName('food-list-hook');
+        [].slice.call(lis).forEach(li => {
+          top += li.clientHeight
+          tops.push(top)
+        })
+        this.tops=tops
+      }
+    },
+    components:{
+      cartControl,
+      shopCart,
+      food
+    }
   }
 </script>
 

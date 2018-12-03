@@ -5,7 +5,10 @@ import {
   RECEIVE_USER,
   RECEIVE_RATINGS,
   RECEIVE_INFO,
-  RECEIVE_GOODS
+  RECEIVE_GOODS,
+  INCREMENT_FOOD_COUNT,
+  DECREMENT_FOOD_COUNT,
+  CLEAR_CART
 } from './mutation-types';
 
 import {
@@ -68,19 +71,31 @@ const actions={
     if(result.code===0) {
       const ratings = result.data
       commit(RECEIVE_RATINGS, {ratings})
-      cb && cb()
+     typeof cb==='function' && cb()
     }
   },
 
 // 异步获取商家商品列表
-  async getShopGoods({commit}) {
+  async getShopGoods({commit},callback) {
     const result = await reqGoods()
     if(result.code===0) {
       const goods = result.data
       commit(RECEIVE_GOODS, {goods})
+      typeof callback==='function' && callback()
       // 如果组件中传递了接收消息的回调函数, 数据更新后, 调用回调通知调用的组件
     }
   },
-
+  //同步统计购物车 数量
+  updateFoodCount ({commit}, {isAdd, food}) {
+    if(isAdd) {
+      commit(INCREMENT_FOOD_COUNT, {food})
+    } else {
+      commit(DECREMENT_FOOD_COUNT, {food})
+    }
+  },
+  // 清空购物车数据
+  clearCart ({commit}) {
+    commit(CLEAR_CART)
+  }
 }
 export default actions

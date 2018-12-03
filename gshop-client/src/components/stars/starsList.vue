@@ -1,5 +1,5 @@
 <template>
-  <div class="star star-24">
+  <div class="star" :class="`star-${size}`">
     <span class="star-item " v-for="(c,index) in arrClass" :key="index" :class="c"></span>
  <!--   <span class="star-item on"></span>
     <span class="star-item on"></span>
